@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinTrack Local - Smart Money Tracker (₹ INR)</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%220%22%20%22100%22%20%22100%22><text y=%22.9em%22 font-size=%2290%22>₹</text></svg>">
+</head>
+<body class="dark-theme">
+
+    <!-- ================================================================= -->
+    <!-- PAGE 1: AUTHENTICATION / GMAIL LOGIN & REGISTER SCREEN            -->
+    <!-- ================================================================= -->
+    <div id="authScreen" class="auth-wrapper" style="display: flex;">
+        <div class="auth-card">
+            <div class="auth-brand">
+                <span class="auth-logo-icon">₹</span>
+                <h2>FinTrack Local</h2>
+                <p class="auth-subtitle">Personal Money Tracker • Stored Locally on Your Device</p>
+            </div>
+
+            <!-- Auth Mode Switcher -->
+            <div class="auth-tabs">
+                <button id="authTabLogin" class="auth-tab active" onclick="switchAuthMode('login')">Sign In with Gmail</button>
+                <button id="authTabRegister" class="auth-tab" onclick="switchAuthMode('register')">Create New Account</button>
+            </div>
+
+            <!-- Login / Register Form -->
+            <form id="authForm" class="auth-form">
+                <div id="authErrorMsg" class="auth-alert error" style="display: none;"></div>
+                <div id="authSuccessMsg" class="auth-alert success" style="display: none;"></div>
+
+                <div class="form-group" id="nameGroup" style="display: none;">
+                    <label for="authName">Your Full Name</label>
+                    <input type="text" id="authName" class="input-control" placeholder="e.g. Rahul Sharma">
+                </div>
+
+                <div class="form-group">
+                    <label for="authEmail">Personal Gmail Address</label>
+                    <div class="input-icon-wrap">
+                        <span class="input-icon">✉️</span>
+                        <input type="email" id="authEmail" class="input-control" placeholder="your.name@gmail.com" required>
+                    </div>
+                    <span class="help-text">Used for your local account, overspending email alerts, and monthly statements.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="authPassword">Account Password</label>
+                    <div class="input-icon-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="authPassword" class="input-control" placeholder="Enter your password" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary full-width btn-lg" id="authSubmitBtn">
+                    Sign In to FinTrack
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <span class="badge-tag" style="background: rgba(16,185,129,0.15); color: #10b981;">🔒 100% Private & Offline</span>
+                <span class="badge-tag" style="background: rgba(99,102,241,0.15); color: #818cf8;">🇮🇳 Base Currency: Rupees (₹)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 2: MAIN APPLICATION DASHBOARD (REQUIRES LOGIN)               -->
+    <!-- ================================================================= -->
+    <div id="appScreen" class="app-container" style="display: none;">
+
+        <!-- Top Navigation Bar -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="brand-logo">
+                    <span class="logo-icon">₹</span>
+                    <div class="brand-text">
+                        <span class="brand-title">FinTrack</span>
+                        <span class="brand-badge">Local (₹ INR)</span>
+                    </div>
+                </div>
+                <!-- Global Month Selector -->
+                <div class="month-picker-wrap">
+                    <button id="prevMonthBtn" class="icon-btn" title="Previous Month">‹</button>
+                    <input type="month" id="selectedMonthInput" class="month-input">
+                    <button id="nextMonthBtn" class="icon-btn" title="Next Month">›</button>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <!-- User Profile & Sign Out -->
+                <div class="user-chip">
+                    <span class="user-avatar" id="headerUserAvatar">👤</span>
+                    <span class="user-name" id="headerUserName">My Account</span>
+                    <button id="logoutBtn" class="logout-btn" title="Sign Out">Sign Out</button>
+                </div>
+
+                <button id="quickAddBtn" class="btn btn-primary">
+                    <span class="btn-icon">＋</span> Add Transaction
+                </button>
+
+                <!-- Notifications Bell -->
+                <div class="notification-wrap">
+                    <button id="notifBellBtn" class="icon-btn notif-bell" title="Notifications">
+                        🔔
+                        <span id="notifBadge" class="badge-count" style="display: none;">0</span>
+                    </button>
+                    <div id="notifDropdown" class="dropdown-menu notif-dropdown">
+                        <div class="dropdown-header">
+                            <h4>Alerts & Notifications</h4>
+                            <div class="dropdown-header-actions">
+                                <button id="markReadBtn" class="btn-link">Mark all read</button>
+                                <button id="clearNotifsBtn" class="btn-link text-danger">Clear</button>
+                            </div>
+                        </div>
+                        <div id="notifList" class="notif-list">
+                            <div class="empty-notifs">No notifications</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="themeToggleBtn" class="icon-btn" title="Toggle Theme">🌙</button>
+            </div>
+        </header>
+
+        <!-- Main Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="dashboard">
+                <span class="tab-icon">📊</span> Dashboard
+            </button>
+            <button class="nav-tab" data-tab="transactions">
+                <span class="tab-icon">📝</span> Transactions
+            </button>
+            <button class="nav-tab" data-tab="converter">
+                <span class="tab-icon">💱</span> Currency Converter
+            </button>
+            <button class="nav-tab" data-tab="analytics">
+                <span class="tab-icon">📈</span> Categories & Subcategories
+            </button>
+            <button class="nav-tab" data-tab="manage-categories">
+                <span class="tab-icon">🏷️</span> Category Manager
+            </button>
+            <button class="nav-tab" data-tab="email-control">
+                <span class="tab-icon">✉️</span> Email Control & Reports
+            </button>
+            <button class="nav-tab" data-tab="settings">
+                <span class="tab-icon">⚙️</span> Limits & Settings
+            </button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="app-main">
+
+            <!-- Global Alert Banners (Overspending & Low Balance) -->
+            <div id="globalAlertContainer" class="global-alerts"></div>
+
+            <!-- ========================================== -->
+            <!-- TAB 1: DASHBOARD                           -->
+            <!-- ========================================== -->
+            <section id="tab-dashboard" class="tab-content active">
+                <!-- KPI Summary Cards Grid -->
+                <div class="kpi-grid">
+                    <!-- Total Balance -->
+                    <div class="kpi-card" id="balanceCard">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Total Account Balance</span>
+                            <span class="kpi-icon">🏦</span>
+                        </div>
+                        <div class="kpi-value" id="kpiBalance">₹0.00</div>
+                        <div class="kpi-footer">
+                            <span id="lowerLimitBadge" class="status-pill pill-safe">Safe Balance</span>
+                            <span class="kpi-subtext" id="kpiLowerLimitText">Lower limit: ₹5,000.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Spending vs Upper Limit -->
+                    <div class="kpi-card" id="upperLimitCard">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Monthly Expenses</span>
+                            <span class="kpi-icon">📉</span>
+                        </div>
+                        <div class="kpi-value text-expense" id="kpiMonthExpense">₹0.00</div>
+                        <!-- Progress Bar for Upper Limit -->
+                        <div class="progress-wrap">
+                            <div class="progress-bar-bg">
+                                <div id="upperLimitProgressBar" class="progress-bar-fill progress-green" style="width: 0%;"></div>
+                            </div>
+                            <div class="progress-labels">
+                                <span id="upperLimitPercentText">0% of limit</span>
+                                <span id="upperLimitMaxText">Max: ₹25,000.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Income -->
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Monthly Income</span>
+                            <span class="kpi-icon">📈</span>
+                        </div>
+                        <div class="kpi-value text-income" id="kpiMonthIncome">₹0.00</div>
+                        <div class="kpi-footer">
+                            <span class="kpi-subtext" id="kpiTxCount">0 transactions this month</span>
+                        </div>
+                    </div>
+
+                    <!-- Net Monthly Savings -->
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Net Savings This Month</span>
+                            <span class="kpi-icon">🌱</span>
+                        </div>
+                        <div class="kpi-value" id="kpiNetSavings">₹0.00</div>
+                        <div class="kpi-footer">
+                            <span class="kpi-subtext" id="kpiRemainingBudget">Remaining budget: ₹25,000.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Split Section: Charts & Recent Transactions -->
+                <div class="dashboard-split">
+                    <!-- Left: Category Spending Donut Chart -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h3>Spending by Category</h3>
+                            <span class="card-badge" id="chartTotalExpense">₹0.00</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" id="donutChartContainer">
+                                <svg id="donutSvg" viewBox="0 0 200 200" class="donut-svg">
+                                    <circle cx="100" cy="100" r="70" class="donut-bg"></circle>
+                                </svg>
+                                <div id="donutCenterText" class="donut-center-info">
+                                    <div class="donut-center-label">Total Spent</div>
+                                    <div class="donut-center-value" id="donutCenterAmount">₹0.00</div>
+                                </div>
+                            </div>
+                            <div id="categoryLegend" class="category-legend"></div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Recent Transactions Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Recent Transactions</h3>
+                            <button class="btn btn-secondary btn-sm" onclick="navigateToTab('transactions')">View All</button>
+                        </div>
+                        <div class="card-body no-padding">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Category & Subcategory</th>
+                                            <th>Description</th>
+                                            <th>Source</th>
+                                            <th class="text-right">Amount (₹)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recentTransactionsTableBody">
+                                        <tr><td colspan="5" class="text-center text-muted">No transactions recorded yet. Click "Add Transaction" to create your first record!</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subcategory Breakdown Spotlight -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h3>Subcategory Expenses Overview</h3>
+                        <span class="text-muted text-sm">Where your money is being spent</span>
+                    </div>
+                    <div class="card-body">
+                        <div id="dashboardSubcatList" class="subcat-progress-grid"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- TAB 2: TRANSACTIONS LIST                   -->
+            <!-- ========================================== -->
+            <section id="tab-transactions" class="tab-content">
+                <div class="card">
+                    <div class="filters-bar">
+                        <div class="filter-group">
+                            <input type="text" id="txSearchInput" class="input-control" placeholder="Search description, category, subcategory...">
+                        </div>
+                        <div class="filter-group">
+                            <select id="txTypeFilter" class="input-control">
+                                <option value="">All Types</option>
+                                <option value="expense">Expenses Only</option>
+                                <option value="income">Income Only</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <select id="txCategoryFilter" class="input-control">
+                                <option value="">All Categories</option>
+                            </select>
+                        </div>
+                        <div class="filter-actions">
+                            <button id="exportCsvBtn" class="btn btn-secondary" title="Export monthly records to CSV">
+                                📥 Export CSV
+                            </button>
+                            <button class="btn btn-primary" onclick="openAddTransactionModal()">
+                                ＋ New Transaction
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Type</th>
+                                    <th>Category</th>
+                                    <th>Subcategory</th>
+                                    <th>Description</th>
+                                    <th>Payment</th>
+                                    <th>Source</th>
+                                    <th class="text-right">Amount (₹ INR)</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allTransactionsTableBody">
+                                <tr><td colspan="9" class="text-center text-muted">No transactions found.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination-footer">
+                        <span id="txCountLabel" class="text-muted text-sm">Showing 0 of 0</span>
+                        <div class="pagination-buttons">
+                            <button id="txPrevPageBtn" class="btn btn-secondary btn-sm" disabled>Previous</button>
+                            <button id="txNextPageBtn" class="btn btn-secondary btn-sm" disabled>Next</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- TAB 3: CURRENCY CONVERTER                  -->
+            <!-- ========================================== -->
+            <section id="tab-converter" class="tab-content">
+                <div class="converter-layout">
+                    <!-- Live Converter Widget -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>💱 Live Currency Converter</h3>
+                            <span class="card-badge">Instant Exchange</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="converter-form">
+                                <div class="form-group">
+                                    <label for="convAmount">Amount to Convert</label>
+                                    <input type="number" step="0.01" min="0.01" id="convAmount" class="input-control input-lg" value="1000">
+                                </div>
+
+                                <div class="converter-row">
+                                    <div class="form-group col-5">
+                                        <label for="convFrom">From Currency</label>
+                                        <select id="convFrom" class="input-control"></select>
+                                    </div>
+                                    <div class="converter-swap-col col-2">
+                                        <button id="convSwapBtn" class="icon-btn" title="Swap Currencies">⇄</button>
+                                    </div>
+                                    <div class="form-group col-5">
+                                        <label for="convTo">To Currency</label>
+                                        <select id="convTo" class="input-control"></select>
+                                    </div>
+                                </div>
+
+                                <!-- Result Box -->
+                                <div class="converter-result-box" id="convResultBox">
+                                    <div class="conv-result-label">Converted Amount</div>
+                                    <div class="conv-result-value" id="convResultValue">₹0.00</div>
+                                    <div class="conv-rate-note" id="convRateNote">1 USD = 84.50 INR</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Exchange Rates Matrix -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📊 Global Exchange Rates (vs ₹ INR)</h3>
+                            <span class="text-muted text-sm">Base: 1 Unit to Rupees</span>
+                        </div>
+                        <div class="card-body no-padding">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Currency</th>
+                                            <th>Code</th>
+                                            <th>Symbol</th>
+                                            <th class="text-right">Value in INR (₹)</th>
+                                            <th class="text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="exchangeRatesTableBody">
+                                        <tr><td colspan="5" class="text-center text-muted">Loading exchange rates...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- TAB 4: CATEGORIES & SUBCATEGORIES ANALYTICS -->
+            <!-- ========================================== -->
+            <section id="tab-analytics" class="tab-content">
+                <div class="analytics-layout">
+                    <!-- Detailed Subcategory Breakdown -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Detailed Subcategory Breakdown</h3>
+                            <span class="text-muted text-sm">Share of expenses by subcategory</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="fullSubcategoryBreakdownList" class="subcat-detail-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Spending Trend -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Daily Spending Trend</h3>
+                            <span class="text-muted text-sm">Expenses recorded each day</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="dailyTrendChartContainer" class="daily-chart-container"></div>
+                        </div>
+                    </div>
+
+                    <!-- 6-Month Comparison -->
+                    <div class="card full-width">
+                        <div class="card-header">
+                            <h3>6-Month Financial Trend (Income vs Expense)</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="history6MonthContainer" class="history-chart-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- TAB 5: CATEGORY MANAGER                    -->
+            <!-- ========================================== -->
+            <section id="tab-manage-categories" class="tab-content">
+                <div class="category-manager-layout">
+                    <!-- Tree view -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Categories & Subcategories</h3>
+                            <button class="btn btn-primary btn-sm" onclick="openAddCategoryModal()">＋ New Category</button>
+                        </div>
+                        <div class="card-body">
+                            <div id="categoriesManagementList" class="category-tree"></div>
+                        </div>
+                    </div>
+
+                    <!-- Add Subcategory Form -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Add Subcategory</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="quickSubcatForm">
+                                <div class="form-group">
+                                    <label for="quickSubcatCategory">Parent Category</label>
+                                    <select id="quickSubcatCategory" class="input-control" required></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="quickSubcatName">Subcategory Name</label>
+                                    <input type="text" id="quickSubcatName" class="input-control" placeholder="e.g. Zomato, Petrol, Electricity" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="quickSubcatDesc">Description (Optional)</label>
+                                    <input type="text" id="quickSubcatDesc" class="input-control" placeholder="Optional notes">
+                                </div>
+                                <button type="submit" class="btn btn-primary full-width">Add Subcategory</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- TAB 6: EMAIL CONTROL & REPORTS             -->
+            <!-- ========================================== -->
+            <section id="tab-email-control" class="tab-content">
+                <div class="email-control-grid">
+                    <!-- Status & On-demand Report -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Email Automation Status</h3>
+                            <span id="schedulerBadge" class="status-pill pill-safe">Active</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="status-info-box">
+                                <div class="info-row">
+                                    <span class="info-label">IMAP Email Control:</span>
+                                    <span class="info-value" id="imapStatusText">Checking...</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Last Checked Inbox:</span>
+                                    <span class="info-value" id="imapLastCheckText">Never</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Monthly Auto-Statement:</span>
+                                    <span class="info-value" id="monthlyAutoStatusText">Enabled</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Last Statement Dispatched:</span>
+                                    <span class="info-value" id="monthlyLastSentText">None</span>
+                                </div>
+                            </div>
+
+                            <div class="action-box mt-4">
+                                <h4>📧 Send Monthly Report Right Now</h4>
+                                <p class="text-sm text-muted">Mails a detailed financial statement with subcategories and attached CSV to your Gmail immediately.</p>
+                                <div class="inline-form mt-2">
+                                    <input type="month" id="reportTargetMonth" class="input-control">
+                                    <button id="sendReportNowBtn" class="btn btn-primary">Send Statement Now</button>
+                                </div>
+                                <div id="reportSendFeedback" class="feedback-msg mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email Commands Guide -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>✉️ Remote Email Control</h3>
+                            <span class="card-badge">Control by Mail</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-sm text-muted">
+                                Send an email from your Gmail address to control your tracker remotely on your local device:
+                            </p>
+
+                            <div class="command-cheatsheet">
+                                <div class="command-item">
+                                    <div class="cmd-code">ADD 450 Food Groceries Supermarket</div>
+                                    <div class="cmd-desc">Records ₹450 expense under Food & Dining > Groceries and checks limits.</div>
+                                </div>
+                                <div class="command-item">
+                                    <div class="cmd-code">SPENT 250 Transport Petrol Shell pump</div>
+                                    <div class="cmd-desc">Quick expense syntax. Auto-categorizes and replies with confirmation.</div>
+                                </div>
+                                <div class="command-item">
+                                    <div class="cmd-code">INCOME 50000 Salary Monthly credit</div>
+                                    <div class="cmd-desc">Records salary or income to your balance.</div>
+                                </div>
+                                <div class="command-item">
+                                    <div class="cmd-code">STATUS or BALANCE</div>
+                                    <div class="cmd-desc">Replies with current balance, monthly spent, remaining budget, and limits.</div>
+                                </div>
+                                <div class="command-item">
+                                    <div class="cmd-code">REPORT</div>
+                                    <div class="cmd-desc">Instantly generates and emails your monthly statement and CSV attachment!</div>
+                                </div>
+                                <div class="command-item">
+                                    <div class="cmd-code">LIMIT UPPER 30000</div>
+                                    <div class="cmd-desc">Adjusts your monthly spending limit to ₹30,000 via email.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email Logs Table -->
+                    <div class="card full-width">
+                        <div class="card-header">
+                            <h3>Recent Email Commands Received</h3>
+                            <button id="refreshLogsBtn" class="btn btn-secondary btn-sm">↻ Refresh Logs</button>
+                        </div>
+                        <div class="card-body no-padding">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Timestamp</th>
+                                            <th>Sender</th>
+                                            <th>Subject / Command</th>
+                                            <th>Status</th>
+                                            <th>Response Sent</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="emailLogsTableBody">
+                                        <tr><td colspan="5" class="text-center text-muted">No email commands received yet.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- TAB 7: LIMITS & SETTINGS                   -->
+            <!-- ========================================== -->
+            <section id="tab-settings" class="tab-content">
+                <div class="settings-grid">
+                    <!-- Budget Limits Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>💰 Budget Limits & Warnings (₹ INR)</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="limitsForm">
+                                <div class="form-group">
+                                    <label for="settingCurrency">Currency Symbol</label>
+                                    <input type="text" id="settingCurrency" class="input-control" value="₹" style="max-width: 120px;" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="settingUpperLimit">Monthly Upper Spending Limit (₹)</label>
+                                    <div class="input-prefix-wrap">
+                                        <span class="currency-prefix">₹</span>
+                                        <input type="number" step="1" id="settingUpperLimit" class="input-control" placeholder="25000" required>
+                                    </div>
+                                    <span class="help-text">Triggers an Overspending Alert when monthly expenses hit or exceed this amount.</span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="settingWarnPct">Upper Limit Warning Threshold (%)</label>
+                                    <input type="number" min="10" max="99" id="settingWarnPct" class="input-control" placeholder="80" required>
+                                    <span class="help-text">Warns you in advance when you reach this percentage (e.g. 80%).</span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="settingLowerLimit">Safe Lower Balance Limit (₹)</label>
+                                    <div class="input-prefix-wrap">
+                                        <span class="currency-prefix">₹</span>
+                                        <input type="number" step="1" id="settingLowerLimit" class="input-control" placeholder="5000" required>
+                                    </div>
+                                    <span class="help-text">Triggers a Low Balance Alert if total account balance drops below this safety buffer.</span>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save Budget Limits</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Gmail Setup Guide Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>💡 How to Connect Your Gmail (Step-by-Step)</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="gmail-guide-box">
+                                <p class="text-sm" style="color: var(--text-primary); margin-bottom: 12px;">
+                                    <strong>Why normal Gmail passwords fail:</strong> Google disables direct password sign-in for security. You must use a 16-letter <strong>Google App Password</strong>.
+                                </p>
+                                <ol class="gmail-steps-list">
+                                    <li>Open your Google Account: <a href="https://myaccount.google.com/security" target="_blank" style="color: var(--primary);">myaccount.google.com/security</a></li>
+                                    <li>Make sure <strong>2-Step Verification</strong> is turned <strong>ON</strong>.</li>
+                                    <li>In the top search bar, type <strong>"App passwords"</strong> and click it.</li>
+                                    <li>Create an App Password named <strong>"FinTrack"</strong>.</li>
+                                    <li>Copy the generated 16-character code (e.g., <code>abcd efgh ijkl mnop</code>) and paste it into the password fields below!</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SMTP Email Dispatch Settings -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>✉️ Outgoing Email (SMTP) Configuration</h3>
+                            <span class="card-badge">Alerts & Reports</span>
+                        </div>
+                        <div class="card-body">
+                            <form id="smtpForm">
+                                <div class="form-check-group">
+                                    <label class="switch">
+                                        <input type="checkbox" id="settingEmailAlerts">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <span>Enable Email Warnings (Overspending & Low Balance)</span>
+                                </div>
+                                <div class="form-check-group">
+                                    <label class="switch">
+                                        <input type="checkbox" id="settingMonthlyReports">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <span>Enable Automated Monthly Statement Delivery</span>
+                                </div>
+
+                                <hr class="form-divider">
+
+                                <div class="form-group">
+                                    <label for="settingAlertEmail">Your Alert Recipient Email</label>
+                                    <input type="email" id="settingAlertEmail" class="input-control" placeholder="your.name@gmail.com">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-8">
+                                        <label for="settingSmtpHost">SMTP Host</label>
+                                        <input type="text" id="settingSmtpHost" class="input-control" value="smtp.gmail.com">
+                                    </div>
+                                    <div class="form-group col-4">
+                                        <label for="settingSmtpPort">Port</label>
+                                        <input type="number" id="settingSmtpPort" class="input-control" value="587">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="settingSmtpUser">Gmail Address</label>
+                                    <input type="email" id="settingSmtpUser" class="input-control" placeholder="your.name@gmail.com">
+                                </div>
+                                <div class="form-group">
+                                    <label for="settingSmtpPass">16-Character Google App Password</label>
+                                    <input type="password" id="settingSmtpPass" class="input-control" placeholder="Paste 16-letter App Password">
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Save SMTP Settings</button>
+                                    <button type="button" id="testSmtpBtn" class="btn btn-secondary">Test SMTP Connection</button>
+                                </div>
+                                <div id="smtpTestFeedback" class="feedback-msg mt-2"></div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- IMAP Email Control Settings -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📥 Incoming Email Control (IMAP)</h3>
+                            <span class="card-badge">Remote Ingestion</span>
+                        </div>
+                        <div class="card-body">
+                            <form id="imapForm">
+                                <div class="form-check-group">
+                                    <label class="switch">
+                                        <input type="checkbox" id="settingImapEnabled">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <span><strong>Enable Email Control</strong> (Log expenses & check balance via email)</span>
+                                </div>
+
+                                <div class="form-row mt-3">
+                                    <div class="form-group col-7">
+                                        <label for="settingAuthSender">Authorized Sender Email</label>
+                                        <input type="email" id="settingAuthSender" class="input-control" placeholder="your.name@gmail.com">
+                                    </div>
+                                    <div class="form-group col-5">
+                                        <label for="settingImapPollInterval">Poll Interval (sec)</label>
+                                        <input type="number" min="15" max="600" id="settingImapPollInterval" class="input-control" value="60">
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group col-8">
+                                        <label for="settingImapHost">IMAP Server Host</label>
+                                        <input type="text" id="settingImapHost" class="input-control" value="imap.gmail.com">
+                                    </div>
+                                    <div class="form-group col-4">
+                                        <label for="settingImapPort">Port</label>
+                                        <input type="number" id="settingImapPort" class="input-control" value="993">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="settingImapUser">Gmail Address</label>
+                                    <input type="email" id="settingImapUser" class="input-control" placeholder="your.name@gmail.com">
+                                </div>
+                                <div class="form-group">
+                                    <label for="settingImapPass">16-Character Google App Password</label>
+                                    <input type="password" id="settingImapPass" class="input-control" placeholder="Paste 16-letter App Password">
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Save IMAP Settings</button>
+                                    <button type="button" id="testImapBtn" class="btn btn-secondary">Test IMAP Connection</button>
+                                </div>
+                                <div id="imapTestFeedback" class="feedback-msg mt-2"></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL: ADD / EDIT TRANSACTION              -->
+    <!-- ========================================== -->
+    <div id="txModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="txModalTitle">Add Transaction</h3>
+                <button class="modal-close" onclick="closeTxModal()">&times;</button>
+            </div>
+            <form id="txForm">
+                <input type="hidden" id="txEditId" value="">
+                
+                <div class="form-group">
+                    <label>Transaction Type</label>
+                    <div class="segmented-control">
+                        <label class="seg-btn">
+                            <input type="radio" name="txType" value="expense" checked>
+                            <span>📉 Expense</span>
+                        </label>
+                        <label class="seg-btn">
+                            <input type="radio" name="txType" value="income">
+                            <span>📈 Income</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Currency Selector & Amount -->
+                <div class="form-row">
+                    <div class="form-group col-4">
+                        <label for="txCurrency">Currency</label>
+                        <select id="txCurrency" class="input-control"></select>
+                    </div>
+                    <div class="form-group col-8">
+                        <label for="txAmount">Amount</label>
+                        <div class="input-prefix-wrap">
+                            <span class="currency-prefix" id="txModalCurrencyPrefix">₹</span>
+                            <input type="number" step="0.01" min="0.01" id="txAmount" class="input-control input-lg" placeholder="0.00" required>
+                        </div>
+                    </div>
+                </div>
+                <div id="txConvertedPreview" class="text-sm font-bold" style="display: none; color: var(--primary); margin-top: -8px; margin-bottom: 14px;"></div>
+
+                <div class="form-row">
+                    <div class="form-group col-6">
+                        <label for="txCategory">Category</label>
+                        <select id="txCategory" class="input-control" required></select>
+                    </div>
+                    <div class="form-group col-6">
+                        <label for="txSubcategory">Subcategory</label>
+                        <select id="txSubcategory" class="input-control">
+                            <option value="">(Select Category First)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-6">
+                        <label for="txDate">Date</label>
+                        <input type="date" id="txDate" class="input-control" required>
+                    </div>
+                    <div class="form-group col-6">
+                        <label for="txPaymentMethod">Payment Method</label>
+                        <select id="txPaymentMethod" class="input-control">
+                            <option value="UPI (GPay / PhonePe / Paytm)">UPI (GPay / PhonePe / Paytm)</option>
+                            <option value="Credit / Debit Card">Credit / Debit Card</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Net Banking">Net Banking</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="txDescription">Description / Note</label>
+                    <input type="text" id="txDescription" class="input-control" placeholder="e.g. Groceries at Reliance Fresh / Swiggy dinner">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeTxModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="txSubmitBtn">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL: ADD CATEGORY                        -->
+    <!-- ========================================== -->
+    <div id="categoryModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Create New Category</h3>
+                <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
+            </div>
+            <form id="categoryForm">
+                <div class="form-group">
+                    <label for="catName">Category Name</label>
+                    <input type="text" id="catName" class="input-control" placeholder="e.g. Subscriptions & Bills" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-6">
+                        <label for="catType">Type</label>
+                        <select id="catType" class="input-control">
+                            <option value="expense">Expense</option>
+                            <option value="income">Income</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-6">
+                        <label for="catIcon">Icon (Emoji)</label>
+                        <input type="text" id="catIcon" class="input-control" value="🏷️" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="catColor">Badge Color</label>
+                    <input type="color" id="catColor" class="input-color-control" value="#6366f1">
+                </div>
+                <div class="form-group">
+                    <label for="catInitialSubs">Initial Subcategories (Comma separated)</label>
+                    <input type="text" id="catInitialSubs" class="input-control" placeholder="e.g. Mobile, WiFi, DTH">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeCategoryModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
